@@ -11,6 +11,10 @@
 
 #include "usb_host.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -150,6 +154,12 @@ extern uint8_t USB_HostGetDeviceAttachState(usb_device_handle deviceHandle);
  * @return kStatus_USB_Success or error codes.
  */
 extern usb_status_t USB_HostValidateDevice(usb_host_handle hostHandle, usb_device_handle deviceHandle);
+
+void USB_HostTriggerReEnumeration(usb_device_handle deviceHandle);
+
+#if defined(__cplusplus)
+}
+#endif
 
 /*! @}*/
 #endif /* _USB_HOST_DEV_MNG_H_ */

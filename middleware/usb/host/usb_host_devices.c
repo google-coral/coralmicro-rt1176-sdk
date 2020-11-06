@@ -1185,6 +1185,13 @@ usb_status_t USB_HostAttachDevice(usb_host_handle hostHandle,
     return kStatus_USB_Success;
 }
 
+void USB_HostTriggerReEnumeration(usb_device_handle deviceHandle) {
+    usb_host_device_instance_t *instance = (usb_host_device_instance_t*)deviceHandle;
+    instance->state = kStatus_DEV_GetDes8;
+    USB_HostProcessState(instance); /* process enumeration state machine */
+}
+
+
 usb_status_t USB_HostDetachDevice(usb_host_handle hostHandle, uint8_t hubNumber, uint8_t portNumber)
 {
     usb_host_device_instance_t *deviceInstance;

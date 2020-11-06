@@ -4970,4 +4970,9 @@ void USB_HostEhciIsrFunction(void *hostHandle)
     }
 }
 
+void USB_HostEhciResetBus(usb_host_ehci_instance_t *ehciInstance) {
+    USB_HostEhciControlBus(ehciInstance, kUSB_HostBusReset);
+}
+
+
 #endif /* USB_HOST_CONFIG_EHCI */

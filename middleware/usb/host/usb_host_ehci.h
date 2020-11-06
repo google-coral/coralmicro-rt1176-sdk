@@ -476,6 +476,8 @@ extern usb_status_t USB_HostEhciIoctl(usb_host_controller_handle controllerHandl
 
 /*! @}*/
 
+void USB_HostEhciResetBus(usb_host_ehci_instance_t* ehciInstance);
+
 #ifdef __cplusplus
 }
 #endif
