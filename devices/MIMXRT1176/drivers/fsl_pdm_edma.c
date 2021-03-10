@@ -83,6 +83,8 @@ static void PDM_EDMACallback(edma_handle_t *handle, void *userData, bool done, u
         /* Disable DMA enable bit */
         PDM_EnableDMA(privHandle->base, false);
         EDMA_AbortTransfer(handle);
+
+        pdmHandle->state = kPDM_Idle;
     }
 }
 
