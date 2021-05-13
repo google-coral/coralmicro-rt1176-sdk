@@ -617,6 +617,7 @@ void CSI_DisableInterrupts(CSI_Type *base, uint32_t mask)
     CSI_REG_CR1(base) &= ~(mask & CSI_CR1_INT_EN_MASK);
     CSI_REG_CR3(base) &= ~(mask & CSI_CR3_INT_EN_MASK);
     CSI_REG_CR18(base) &= ~((mask & CSI_CR18_INT_EN_MASK) >> 6U);
+    (void)DisableIRQ(s_csiIRQ[CSI_GetInstance(base)]);
 }
 
 #if !CSI_DRIVER_FRAG_MODE
