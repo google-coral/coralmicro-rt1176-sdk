@@ -65,7 +65,7 @@ typedef TaskHandle_t sys_thread_t;
 
 #define sys_mbox_valid( x ) ( ( ( *x ) == NULL) ? pdFALSE : pdTRUE )
 #define sys_mbox_set_invalid( x ) ( ( *x ) = NULL )
-#define sys_sem_valid( x ) ( ( ( *x ) == NULL) ? pdFALSE : pdTRUE )
+#define sys_sem_valid( x ) ( x == NULL ? pdFALSE : ( ( ( *x ) == NULL) ? pdFALSE : pdTRUE ) )
 #define sys_sem_set_invalid( x ) ( ( *x ) = NULL )
 
 #else /* NO_SYS */ /* Bare-metal */
@@ -82,6 +82,15 @@ void time_init(void);
 #endif /* __cplusplus */
 
 #endif
+
+#if LWIP_NETCONN_SEM_PER_THREAD
+sys_sem_t* sys_arch_netconn_sem_get(void);
+void sys_arch_netconn_sem_alloc(void);
+void sys_arch_netconn_sem_free(void);
+#define LWIP_NETCONN_THREAD_SEM_GET()   sys_arch_netconn_sem_get()
+#define LWIP_NETCONN_THREAD_SEM_ALLOC() sys_arch_netconn_sem_alloc()
+#define LWIP_NETCONN_THREAD_SEM_FREE()  sys_arch_netconn_sem_free()
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
 typedef unsigned long sys_prot_t;
 

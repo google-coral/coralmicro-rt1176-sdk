@@ -93,6 +93,63 @@ u32_t lwip_rand(void)
 }
 
 #if !NO_SYS
+
+#if LWIP_NETCONN_SEM_PER_THREAD
+#if configNUM_THREAD_LOCAL_STORAGE_POINTERS > 0
+
+sys_sem_t *
+sys_arch_netconn_sem_get(void)
+{
+  void* ret;
+  TaskHandle_t task = xTaskGetCurrentTaskHandle();
+  LWIP_ASSERT("task != NULL", task != NULL);
+
+  ret = pvTaskGetThreadLocalStoragePointer(task, 0);
+  return ret;
+}
+
+void
+sys_arch_netconn_sem_alloc(void)
+{
+  void *ret;
+  TaskHandle_t task = xTaskGetCurrentTaskHandle();
+  LWIP_ASSERT("task != NULL", task != NULL);
+
+  ret = pvTaskGetThreadLocalStoragePointer(task, 0);
+  if(ret == NULL) {
+    sys_sem_t *sem;
+    err_t err;
+    /* need to allocate the memory for this semaphore */
+    sem = mem_malloc(sizeof(sys_sem_t));
+    LWIP_ASSERT("sem != NULL", sem != NULL);
+    err = sys_sem_new(sem, 0);
+    LWIP_ASSERT("err == ERR_OK", err == ERR_OK);
+    LWIP_ASSERT("sem invalid", sys_sem_valid(sem));
+    vTaskSetThreadLocalStoragePointer(task, 0, sem);
+  }
+}
+
+void sys_arch_netconn_sem_free(void)
+{
+  void* ret;
+  TaskHandle_t task = xTaskGetCurrentTaskHandle();
+  LWIP_ASSERT("task != NULL", task != NULL);
+
+  ret = pvTaskGetThreadLocalStoragePointer(task, 0);
+  if(ret != NULL) {
+    sys_sem_t *sem = ret;
+    sys_sem_free(sem);
+    mem_free(sem);
+    vTaskSetThreadLocalStoragePointer(task, 0, NULL);
+  }
+}
+
+#else /* configNUM_THREAD_LOCAL_STORAGE_POINTERS > 0 */
+#error LWIP_NETCONN_SEM_PER_THREAD needs configNUM_THREAD_LOCAL_STORAGE_POINTERS
+#endif /* configNUM_THREAD_LOCAL_STORAGE_POINTERS > 0 */
+
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
+
 /*---------------------------------------------------------------------------*
  * Routine:  sys_mbox_new
  *---------------------------------------------------------------------------*
