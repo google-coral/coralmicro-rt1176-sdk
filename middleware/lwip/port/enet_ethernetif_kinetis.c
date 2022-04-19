@@ -48,6 +48,7 @@
 #include "lwip/snmp.h"
 #include "lwip/stats.h"
 #include "lwip/sys.h"
+#include "lwip/tcpip.h"
 #include "netif/etharp.h"
 #include "netif/ppp/pppoe.h"
 
@@ -162,6 +163,8 @@ struct ethernetif
 #if USE_RTOS && defined(SDK_OS_FREE_RTOS)
     EventGroupHandle_t enetTransmitAccessEvent;
     EventBits_t txFlag;
+    QueueHandle_t rxtxQueue;
+    volatile bool rxPending;
 #endif
     enet_rx_bd_struct_t *RxBuffDescrip;
     enet_tx_bd_struct_t *TxBuffDescrip;
@@ -175,6 +178,7 @@ struct ethernetif
  ******************************************************************************/
 
 static void ethernetif_rx_release(struct pbuf *p);
+static void rxtx_task_func(void *param);
 
 /*******************************************************************************
  * Code
@@ -196,11 +200,32 @@ static void ethernet_callback(ENET_Type *base,
     switch (event)
     {
         case kENET_RxEvent:
-            /* Disabling RX interrupts required by ENET_GetRxFrame() when called from ISR */
-            ENET_DisableInterrupts(ethernetif->base, (uint32_t)kENET_RxFrameInterrupt);
-            ethernetif_input(netif);
-            ENET_EnableInterrupts(ethernetif->base, (uint32_t)kENET_RxFrameInterrupt);
-            break;
+        {
+            SYS_ARCH_DECL_PROTECT(old_level);
+            SYS_ARCH_PROTECT(old_level);
+            ethernetif->rxPending = true;
+            SYS_ARCH_UNPROTECT(old_level);
+
+            portBASE_TYPE taskToWake = pdFALSE;
+            struct pbuf *p = NULL;
+#ifdef __CA7_REV
+            if (SystemGetIRQNestingLevel())
+#else
+            if (__get_IPSR())
+#endif
+            {
+                xQueueSendFromISR(ethernetif->rxtxQueue, &p, &taskToWake);
+                if (pdTRUE == taskToWake)
+                {
+                    portYIELD_FROM_ISR(taskToWake);
+                }
+            }
+            else
+            {
+                xQueueSend(ethernetif->rxtxQueue, &p, 0);
+            }
+        }
+        break;
         case kENET_TxEvent:
         {
             portBASE_TYPE taskToWake = pdFALSE;
@@ -450,6 +475,10 @@ void ethernetif_enet_init(struct netif *netif,
         ethernetif->RxPbufs[i].netif                  = netif;
     }
 
+    ethernetif->rxPending = false;
+    ethernetif->rxtxQueue = xQueueCreate((1024 * 1024) / netif->mtu /* 1M */, sizeof(struct pbuf *));
+    xTaskCreate(rxtx_task_func, "eth_rxtx", configMINIMAL_STACK_SIZE * 10, netif, configMAX_PRIORITIES - 1, NULL);
+
     /* Initialize the ENET module. */
     ENET_Init(ethernetif->base, &ethernetif->handle, &config, &buffCfg[0], netif->hwaddr, sysClock);
 
@@ -627,7 +656,7 @@ struct pbuf *ethernetif_linkinput(struct netif *netif)
     return p;
 }
 
-err_t ethernetif_linkoutput(struct netif *netif, struct pbuf *p)
+static err_t ethernetif_linkoutput_blocking(struct netif *netif, struct pbuf *p)
 {
     err_t result;
     struct ethernetif *ethernetif = netif->state;
@@ -702,6 +731,20 @@ err_t ethernetif_linkoutput(struct netif *netif, struct pbuf *p)
     return result;
 }
 
+err_t ethernetif_linkoutput(struct netif *netif, struct pbuf *p)
+{
+    err_t ret = ERR_OK;
+    struct ethernetif *ethernetif = netif->state;
+    if (xQueueSend(ethernetif->rxtxQueue, &p, 0) == pdTRUE) {
+        pbuf_ref(p);
+    } else {
+        ret = ERR_MEM;
+    }
+
+    return ret;
+}
+
+
 /**
  * Should be called at the beginning of the program to set up the
  * first network interface. It calls the function ethernetif_init() to do the
@@ -759,3 +802,51 @@ err_t ethernetif1_init(struct netif *netif)
     return ethernetif_init(netif, &ethernetif_1, ethernetif_get_enet_base(1U), (ethernetif_config_t *)netif->state);
 }
 #endif /* FSL_FEATURE_SOC_*_ENET_COUNT */
+
+static void rx_pending_frames(struct netif *netif)
+{
+    bool rxPending;
+    struct ethernetif *ethernetif = netif->state;
+    SYS_ARCH_DECL_PROTECT(old_level);
+
+    SYS_ARCH_PROTECT(old_level);
+    rxPending = ethernetif->rxPending;
+    ethernetif->rxPending = false;
+    SYS_ARCH_UNPROTECT(old_level);
+    if (rxPending) {
+        ethernetif_input(netif);
+    }
+}
+
+static void rxtx_task_func(void *param)
+{
+    struct netif *netif = (struct netif *)param;
+    struct ethernetif *ethernetif = netif->state;
+    struct pbuf *p;
+    err_t err;
+
+    while (true) {
+        /* Block until something to do. */
+        xQueueReceive(ethernetif->rxtxQueue, &p, portMAX_DELAY);
+
+        while (p) {
+            err = ethernetif_linkoutput_blocking(netif, p);
+            if (err !=  ERR_OK) {
+                printf("ethernetif_linkoutput %d\r\n", err);
+            }
+            do {
+                err = pbuf_free_callback(p);
+                if (err != ERR_OK) {
+                    taskYIELD();
+                }
+            } while(err == ERR_MEM);
+            p = NULL;
+
+            rx_pending_frames(netif);
+
+            xQueueReceive(ethernetif->rxtxQueue, &p, 0);
+        }
+
+        rx_pending_frames(netif);
+    }
+}
