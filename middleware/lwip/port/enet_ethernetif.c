@@ -49,6 +49,7 @@
 #include "netif/ppp/pppoe.h"
 #include "lwip/igmp.h"
 #include "lwip/mld6.h"
+#include "lwip/tcpip.h"
 
 #if USE_RTOS && defined(SDK_OS_FREE_RTOS)
 #include "FreeRTOS.h"
@@ -139,6 +140,7 @@ void ethernetif_phy_init(struct ethernetif *ethernetif,
 void ethernetif_input(struct netif *netif)
 {
     struct pbuf *p;
+    err_t err;
 
     LWIP_ASSERT("netif != NULL", (netif != NULL));
 
@@ -149,7 +151,12 @@ void ethernetif_input(struct netif *netif)
         if (netif->input(p, netif) != ERR_OK)
         {
             LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
-            pbuf_free(p);
+            do {
+                err = pbuf_free_callback(p);
+                if (err != ERR_OK) {
+                    taskYIELD();
+                }
+            } while(err == ERR_MEM);
             p = NULL;
         }
     }
