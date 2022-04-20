@@ -660,9 +660,8 @@ static err_t ethernetif_linkoutput_blocking(struct netif *netif, struct pbuf *p)
 {
     err_t result;
     struct ethernetif *ethernetif = netif->state;
-    struct pbuf *q;
     unsigned char *pucBuffer;
-    unsigned char *pucChar;
+    u16_t uCopied;
 
     LWIP_ASSERT("Output packet buffer empty", p);
 
@@ -692,17 +691,8 @@ static err_t ethernetif_linkoutput_blocking(struct netif *netif, struct pbuf *p)
         }
         else
         {
-            pucChar = pucBuffer;
-
-            for (q = p; q != NULL; q = q->next)
-            {
-                /* Send the data from the pbuf to the interface, one pbuf at a
-                time. The size of the data in each pbuf is kept in the ->len
-                variable. */
-                /* send data from(q->payload, q->len); */
-                memcpy(pucChar, q->payload, q->len);
-                pucChar += q->len;
-            }
+            uCopied = pbuf_copy_partial(p, pucBuffer, p->tot_len, 0);
+            LWIP_ASSERT("uCopied != p->tot_len", uCopied == p->tot_len);
         }
     }
 
