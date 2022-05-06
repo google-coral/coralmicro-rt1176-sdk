@@ -87,6 +87,7 @@
 typedef struct ethernetif_config
 {
     phy_handle_t *phyHandle;
+    phy_config_t *phyConfig;
     uint8_t macAddress[NETIF_MAX_HWADDR_LEN];
 } ethernetif_config_t;
 

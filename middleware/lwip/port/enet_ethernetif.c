@@ -77,10 +77,14 @@ void ethernetif_phy_init(struct ethernetif *ethernetif,
     bool autonego          = false;
     uint32_t initWaitCount = 0;
     uint32_t autoWaitCount = 0;
-    phy_config_t phyConfig = {
-        .phyAddr = ethernetifConfig->phyHandle->phyAddr,
-        .autoNeg = true,
-    };
+    phy_config_t phyConfig;
+    if (ethernetifConfig->phyConfig) {
+        phyConfig = *ethernetifConfig->phyConfig;
+        autonego = true;
+    } else {
+        phyConfig.phyAddr = ethernetifConfig->phyHandle->phyAddr;
+        phyConfig.autoNeg = true;
+    }
 
     ethernetifConfig->phyHandle->mdioHandle->resource.base = *ethernetif_enet_ptr(ethernetif);
 
@@ -99,7 +103,9 @@ void ethernetif_phy_init(struct ethernetif *ethernetif,
         autoWaitCount = ENET_ATONEGOTIATION_TIMEOUT;
         do
         {
-            PHY_GetAutoNegotiationStatus(ethernetifConfig->phyHandle, &autonego);
+            if (phyConfig.autoNeg) {
+                PHY_GetAutoNegotiationStatus(ethernetifConfig->phyHandle, &autonego);
+            }
             PHY_GetLinkStatus(ethernetifConfig->phyHandle, &link);
             if (autonego && link)
             {
