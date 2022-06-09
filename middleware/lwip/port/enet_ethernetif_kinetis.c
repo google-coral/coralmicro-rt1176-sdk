@@ -565,20 +565,15 @@ static struct pbuf *ethernetif_rx_frame_to_pbufs(struct ethernetif *ethernetif, 
     rx_pbuf_wrapper_t *wrapper;
     uint16_t len   = 0U;
     struct pbuf *p = NULL;
+    struct pbuf *q = NULL;
     int idx;
     int i;
-    err_t err;
 
-    p = pbuf_alloc(PBUF_RAW, rxFrame->totLen, PBUF_POOL);
-    if (!p) {
-        printf("pbuf_alloc(%d) failed\r\n", rxFrame->totLen);
-        /* Fall through to return DMA buffers to enet pool. */
-    }
-
-    for (i = 0; i < MAX_BUFFERS_PER_FRAME; ++i)
+    for (i = 0; ((i < MAX_BUFFERS_PER_FRAME) && (len < rxFrame->totLen)); i++)
     {
         buffer       = rxFrame->rxBuffArray[i].buffer;
         bufferLength = rxFrame->rxBuffArray[i].length;
+        len += bufferLength;
 
         /* Find pbuf wrapper for the actually read byte buffer */
         idx = ((rx_buffer_t *)buffer) - ethernetif->RxDataBuff;
@@ -587,22 +582,22 @@ static struct pbuf *ethernetif_rx_frame_to_pbufs(struct ethernetif *ethernetif, 
         wrapper = &ethernetif->RxPbufs[idx];
         LWIP_ASSERT("Buffer returned by ENET_GetRxFrame() doesn't match wrapper buffer", wrapper->buffer == buffer);
 
-        if (p && len < rxFrame->totLen) {
-            err = pbuf_take_at(p, buffer, bufferLength, len);
-            LWIP_ASSERT("pbuf_take_at() failed", err == ERR_OK);
+        /* Wrap the received buffer in pbuf. */
+        if (p == NULL)
+        {
+            p = pbuf_alloced_custom(PBUF_RAW, bufferLength, PBUF_REF, &wrapper->p, buffer, bufferLength);
+            LWIP_ASSERT("pbuf_alloced_custom() failed", p);
         }
+        else
+        {
+            q = pbuf_alloced_custom(PBUF_RAW, bufferLength, PBUF_REF, &wrapper->p, buffer, bufferLength);
+            LWIP_ASSERT("pbuf_alloced_custom() failed", q);
 
-        len += bufferLength;
-        ethernetif_rx_free(ethernetif->base, wrapper->buffer, wrapper->netif, 0);
-    }
-
-    if (!p) {
-        /* Could not allocate memory, drop frame. */
-        return NULL;
+            pbuf_cat(p, q);
+        }
     }
 
     LWIP_ASSERT("p->tot_len != rxFrame->totLen", p->tot_len == rxFrame->totLen);
-    LWIP_ASSERT("p->tot_len != len", p->tot_len == len);
 
     MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
     if (((u8_t *)p->payload)[0] & 1)
