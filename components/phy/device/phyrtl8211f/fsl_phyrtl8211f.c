@@ -181,14 +181,19 @@ status_t PHY_RTL8211F_Init(phy_handle_t *handle, const phy_config_t *config)
     if (config->autoNeg)
     {
         /* Set the auto-negotiation. */
+        regValue = PHY_10BASETX_FULLDUPLEX_MASK |
+                           PHY_10BASETX_HALFDUPLEX_MASK | PHY_IEEE802_3_SELECTOR_MASK;
+        /* If the PHY Speed is > 10M, allow 100M operation */
+        if (config->speed != kPHY_Speed10M) {
+            regValue |= PHY_100BASETX_FULLDUPLEX_MASK | PHY_100BASETX_HALFDUPLEX_MASK;
+        }
         result =
-            MDIO_Write(handle->mdioHandle, handle->phyAddr, PHY_AUTONEG_ADVERTISE_REG,
-                       PHY_100BASETX_FULLDUPLEX_MASK | PHY_100BASETX_HALFDUPLEX_MASK | PHY_10BASETX_FULLDUPLEX_MASK |
-                           PHY_10BASETX_HALFDUPLEX_MASK | PHY_IEEE802_3_SELECTOR_MASK);
+            MDIO_Write(handle->mdioHandle, handle->phyAddr, PHY_AUTONEG_ADVERTISE_REG, regValue);
         if (result == kStatus_Success)
         {
+            /* Disable 1G if PHY speed is not 1000M. */
             result = MDIO_Write(handle->mdioHandle, handle->phyAddr, PHY_1000BASET_CONTROL_REG,
-                                PHY_1000BASET_FULLDUPLEX_MASK);
+                                config->speed == kPHY_Speed1000M ? PHY_1000BASET_FULLDUPLEX_MASK : 0);
             if (result == kStatus_Success)
             {
                 result = MDIO_Read(handle->mdioHandle, handle->phyAddr, PHY_BASICCONTROL_REG, &regValue);
