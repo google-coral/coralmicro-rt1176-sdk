@@ -102,7 +102,7 @@
 /* The number of RX buffers. ENET_RXBD_NUM is always held by ENET driver,
  * so a couple more are needed to pass zero-copy data into lwIP. */
 #ifndef ENET_RXBUFF_NUM
-#define ENET_RXBUFF_NUM (ENET_RXBD_NUM * 2)
+#define ENET_RXBUFF_NUM (ENET_RXBD_NUM * 10)
 #endif
 
 /* At least ENET_RXBD_NUM number of buffers is always held by ENET driver for RX.
