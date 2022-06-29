@@ -105,6 +105,13 @@ static wiced_bool_t wwd_bus_flow_controlled = WICED_FALSE;
 #ifdef WWD_ENABLE_STATS
 wwd_bus_stats_t wwd_bus_stats;
 #endif /* WWD_ENABLE_STATS */
+typedef enum _sdio_bus_width
+{
+ kSDIO_DataBus1Bit = 0x00U, /*!< 1 bit bus mode */
+ kSDIO_DataBus4Bit = 0X02U, /*!< 4 bit bus mode*/
+ kSDIO_DataBus8Bit = 0X03U, /*!< 8 bit bus mode*/
+} sdio_bus_width_t;
+extern sdio_bus_width_t g_buswidth;
 
 /******************************************************
  *             Static Function Declarations
@@ -268,6 +275,7 @@ wwd_result_t wwd_bus_init( void )
     /* Read the bus width and set to 4 bits */
     VERIFY_RESULT( wwd_bus_read_register_value (BUS_FUNCTION, SDIOD_CCCR_BICTRL, (uint8_t) 1, &byte_data) );
     VERIFY_RESULT( wwd_bus_write_register_value(BUS_FUNCTION, SDIOD_CCCR_BICTRL, (uint8_t) 1, (byte_data & (~BUS_SD_DATA_WIDTH_MASK)) | BUS_SD_DATA_WIDTH_4BIT ) );
+    g_buswidth = (sdio_bus_width_t)BUS_SD_DATA_WIDTH_4BIT;
     /* NOTE: We don't need to change our local bus settings since we're not sending any data (only using CMD52) until after we change the bus speed further down */
 #endif
     /* Set the block size */

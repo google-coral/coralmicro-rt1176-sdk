@@ -219,7 +219,7 @@ wiced_result_t wiced_rtos_delete_thread(wiced_thread_t* thread)
 
 wiced_result_t wiced_rtos_is_current_thread( wiced_thread_t* thread )
 {
-    if ( xTaskGetCurrentThread( ) == *thread )
+    if ( xTaskGetCurrentTaskHandle( ) == *thread )
     {
         return WICED_SUCCESS;
     }

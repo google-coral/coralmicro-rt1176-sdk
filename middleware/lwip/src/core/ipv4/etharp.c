@@ -165,7 +165,7 @@ free_etharp_q(struct etharp_q_entry *q)
 #endif /* ARP_QUEUEING */
 
 /** Clean up ARP table entries */
-static void
+void
 etharp_free_entry(int i)
 {
   /* remove from SNMP ARP index tree */

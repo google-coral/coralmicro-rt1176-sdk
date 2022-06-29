@@ -241,7 +241,7 @@ wiced_result_t wiced_network_init( void )
     host_semaphore_type_t lwip_done_sema;
 
     /* Initialize the LwIP system.  */
-    WPRINT_NETWORK_INFO(("Initialising LwIP " LwIP_VERSION "\n"));
+    // WPRINT_NETWORK_INFO(("Initialising LwIP " LwIP_VERSION "\n"));
 
     ip_networking_inited[0] = WICED_FALSE;
     ip_networking_inited[1] = WICED_FALSE;
@@ -257,8 +257,6 @@ wiced_result_t wiced_network_init( void )
     }
 
     /* Initialise LwIP, providing the callback function and callback semaphore */
-    tcpip_init( tcpip_init_done, (void*) &lwip_done_sema );
-    host_rtos_get_semaphore( &lwip_done_sema, NEVER_TIMEOUT, WICED_FALSE );
     host_rtos_deinit_semaphore( &lwip_done_sema );
 
     memset(&internal_dhcp_server, 0, sizeof(internal_dhcp_server));
@@ -357,7 +355,6 @@ wiced_result_t wiced_network_create_packet_pool( uint8_t* memory_pointer, uint32
 
 wiced_result_t wiced_network_deinit( void )
 {
-    tcpip_deinit( );
     wiced_rtos_deinit_mutex( &link_subscribe_mutex );
     wiced_rtos_deinit_mutex( &lwip_send_interface_mutex );
     return WICED_SUCCESS;
@@ -414,7 +411,7 @@ wiced_result_t wiced_ip_up( wiced_interface_t interface, wiced_network_config_t 
         ip4_addr_set_zero( &netmask );
     }
 
-    if ( NULL == netif_add( &IP_HANDLE(interface), &ipaddr, &netmask, &gw, (void*) (ptrdiff_t) WICED_TO_WWD_INTERFACE( interface ), ethernetif_init, ethernet_input ) )
+    if ( NULL == netif_add( &IP_HANDLE(interface), &ipaddr, &netmask, &gw, (void*) (ptrdiff_t) WICED_TO_WWD_INTERFACE( interface ), wlanif_init, ethernet_input ) )
     {
         WPRINT_NETWORK_ERROR(( "Could not add network interface\n" ));
         return WICED_ERROR;

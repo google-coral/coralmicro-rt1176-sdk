@@ -191,13 +191,42 @@ static err_t low_level_output( struct netif *netif, /*@only@*/ struct pbuf *p )
     UNUSED_PARAMETER( netif );
     /*@+noeffect@*/
 
+    wiced_buffer_t buffer;
+    err_t err;
+
     if ( ( (wiced_interface_t) netif->state  == WICED_ETHERNET_INTERFACE ) ||
          ( wwd_wifi_is_ready_to_transceive( (wwd_interface_t) netif->state ) == WWD_SUCCESS ) )
     {
-        /* Take a reference to this packet */
-        pbuf_ref( p );
+        if ( ( p->next == NULL ) && ( p->tot_len == p->len ) )
+        {
+            /* Take a reference to this packet */
+            pbuf_ref( p );
+        }
+        else
+        {
+            /* Packet is in a pbuf chain, need to copy the payloads into a contiguous buffer */
 
-        LWIP_ASSERT( "No chained buffers", ( ( p->next == NULL ) && ( ( p->tot_len == p->len ) ) ) );
+            if ( host_buffer_get( &buffer, WWD_NETWORK_TX, (unsigned short) ( p->tot_len + MAX_BUS_HEADER_LENGTH + MAX_SDPCM_HEADER_LENGTH ), WICED_FALSE ) != WWD_SUCCESS )
+            {
+                return (err_t) ERR_MEM;
+            }
+
+            if ( pbuf_remove_header( (struct pbuf *) buffer, MAX_BUS_HEADER_LENGTH + MAX_SDPCM_HEADER_LENGTH ) != 0U )
+            {
+                host_buffer_release( buffer, WWD_NETWORK_TX );
+                return (err_t) ERR_ARG;
+            }
+
+            err = pbuf_copy( (struct pbuf *) buffer, p );
+            if ( err != ( (err_t) ERR_OK ) )
+            {
+                host_buffer_release( buffer, WWD_NETWORK_TX );
+                return err;
+            }
+
+            p = (struct pbuf *) buffer;
+        }
+
         wwd_network_send_ethernet_data( p, (wwd_interface_t) netif->state );
 
         LINK_STATS_INC( link.xmit );
@@ -333,7 +362,7 @@ void host_network_set_ethertype_filter( uint16_t ethertype, wwd_interface_t inte
  *         ERR_MEM if private data couldn't be allocated
  *         any other err_t on error
  */
-err_t ethernetif_init( /*@partial@*/ struct netif *netif )
+err_t wlanif_init( /*@partial@*/ struct netif *netif )
 {
     LWIP_ASSERT("netif != NULL", (netif != NULL));
 

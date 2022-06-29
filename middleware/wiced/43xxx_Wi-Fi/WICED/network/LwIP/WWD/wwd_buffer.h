@@ -40,6 +40,12 @@ extern "C"
 #include "wwd_constants.h"
 #include "wiced_constants.h"
 
+#define PBUF_POOL_TX  PBUF_POOL
+#define PBUF_POOL_RX  PBUF_POOL
+#define MEMP_PBUF_POOL_TX  MEMP_PBUF_POOL
+#define MEMP_PBUF_POOL_RX  MEMP_PBUF_POOL
+
+
 /******************************************************
  *             Constants
  ******************************************************/

@@ -43,7 +43,9 @@
 
 #include "platform_config.h"
 
+#ifdef WICED_SECURE_PRNG_FORTUNA_ENABLE
 #include "fortuna.h"
+#endif
 
 #include <string.h>
 

@@ -37,7 +37,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef USES_RESOURCE_FILESYSTEM
 #include "wicedfs.h"
+#endif
 #include "wiced_resource.h"
 #include "platform_config.h"
 #include "platform_resource.h"

@@ -118,7 +118,7 @@ wiced_result_t wiced_rtos_init( void )
 {
     wiced_result_t result = WICED_SUCCESS;
 
-    WPRINT_RTOS_INFO( ("Started " RTOS_NAME " " RTOS_VERSION "\n") );
+    // WPRINT_RTOS_INFO( ("Started " RTOS_NAME " " RTOS_VERSION "\n") );
 
     result = wiced_rtos_create_worker_thread( WICED_HARDWARE_IO_WORKER_THREAD, WICED_DEFAULT_WORKER_PRIORITY, HARDWARE_IO_WORKER_THREAD_STACK_SIZE, HARDWARE_IO_WORKER_THREAD_QUEUE_SIZE );
     if ( result != WICED_SUCCESS )

@@ -31,39 +31,34 @@
  * so agrees to indemnify Cypress against all liability.
  */
 
-#ifndef INCLUDED_WWD_NETWORK_H_
-#define INCLUDED_WWD_NETWORK_H_
+#include <stdint.h>
 
-#include "lwip/err.h"
+/* clang-format off */
+#include "platform_dct.h"
+#include "wiced_dct_common.h"
+/* clang-format on */
 
-#ifdef __cplusplus
-extern "C"
-{
+/* Offsets taken from 43xxx_Wi-Fi/WICED/platform/MCU/wiced_dct_local_file.c */
+const uint32_t DCT_section_offsets[] = {
+    [DCT_APP_SECTION] = sizeof(platform_dct_data_t),
+    [DCT_HK_INFO_SECTION] = sizeof(platform_dct_data_t),
+    [DCT_SECURITY_SECTION] =
+        OFFSETOF(platform_dct_data_t, security_credentials),
+    [DCT_MFG_INFO_SECTION] = OFFSETOF(platform_dct_data_t, mfg_info),
+    [DCT_WIFI_CONFIG_SECTION] = OFFSETOF(platform_dct_data_t, wifi_config),
+    [DCT_ETHERNET_CONFIG_SECTION] =
+        OFFSETOF(platform_dct_data_t, ethernet_config),
+    [DCT_NETWORK_CONFIG_SECTION] =
+        OFFSETOF(platform_dct_data_t, network_config),
+#ifdef WICED_DCT_INCLUDE_BT_CONFIG
+    [DCT_BT_CONFIG_SECTION] = OFFSETOF(platform_dct_data_t, bt_config),
 #endif
-
-struct pbuf;
-struct netif;
-
-/******************************************************
- *             Constants
- ******************************************************/
-
-/******************************************************
- *             Structures
- ******************************************************/
-
-/******************************************************
- *             Function declarations
- ******************************************************/
-
-extern err_t wlanif_init( /*@partial@*/ struct netif *netif );
-
-/******************************************************
- *             Global variables
- ******************************************************/
-
-#ifdef __cplusplus
-}
+#ifdef WICED_DCT_INCLUDE_P2P_CONFIG
+    [DCT_P2P_CONFIG_SECTION] = OFFSETOF(platform_dct_data_t, p2p_config),
 #endif
-
-#endif /* define INCLUDED_WWD_NETWORK_H_ */
+#ifdef OTA2_SUPPORT
+    [DCT_OTA2_CONFIG_SECTION] = OFFSETOF(platform_dct_data_t, ota2_config),
+#endif
+    [DCT_MISC_SECTION] = OFFSETOF(platform_dct_data_t, dct_misc),
+    [DCT_INTERNAL_SECTION] = 0,
+};

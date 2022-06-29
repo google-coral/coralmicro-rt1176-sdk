@@ -76,7 +76,7 @@ wiced_result_t wiced_core_init( void )
 
     wiced_core_initialised = WICED_TRUE;
 
-    WPRINT_APP_INFO( ("WICED_core Initialized\r\n") );
+    // WPRINT_APP_INFO( ("WICED_core Initialized\r\n") );
     return WICED_SUCCESS;
 }
 

@@ -359,21 +359,6 @@ wwd_result_t host_rtos_deinit_mutex( host_mutex_type_t* mutex )
     return WWD_UNSUPPORTED;
 }
 
-void vApplicationStackOverflowHook( TaskHandle_t *pxTask, signed portCHAR *pcTaskName )
-{
-    UNUSED_PARAMETER( pxTask );
-    UNUSED_PARAMETER( pcTaskName ); /* unused parameter in release build */
-
-    wiced_assert("Stack Overflow Detected", 0 != 0);
-}
-
-void vApplicationMallocFailedHook( void )
-{
-    WPRINT_RTOS_DEBUG(("Heap is out of memory during malloc\n"));
-    wiced_assert("Malloc failed!", 0 != 0);
-}
-
-
 wwd_result_t host_rtos_init_queue( /*@special@*/ /*@out@*/ host_queue_type_t* queue, void* buffer, uint32_t buffer_size, uint32_t message_size ) /*@allocates *queue@*/  /*@defines **queue@*/
 {
     UNUSED_PARAMETER(buffer);

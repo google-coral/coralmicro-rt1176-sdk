@@ -177,13 +177,14 @@ static uint8_t                      retry_backoff_timeout = DEFAULT_RETRY_BACKOF
  *               Function Definitions
  ******************************************************/
 
+extern wiced_country_code_t coral_micro_get_wiced_country_code();
 wiced_result_t wiced_init( void )
 {
     /* used for monitoring init run-time */
     wiced_result_t status = WICED_SUCCESS;
     wwd_time_t elapsed_time;
 
-    WPRINT_WICED_INFO( ("\nStarting WICED " WICED_VERSION "\n") );
+    // WPRINT_WICED_INFO( ("\nStarting WICED " WICED_VERSION "\n") );
 
     CHECK_RETURN( wiced_core_init( ) );
 
@@ -276,6 +277,7 @@ wiced_result_t wiced_wlan_connectivity_init( void )
     }
     wiced_dct_read_unlock( wifi_config, WICED_FALSE );
     wiced_dct_read_unlock( dct_misc, WICED_FALSE );
+    country_code = coral_micro_get_wiced_country_code();
     WPRINT_NETWORK_DEBUG( ( "WWD " BUS " interface initializing with %c%c/%d\n",
          ((country_code) >>  0) & 0xff, ((country_code) >>  8) & 0xff, ((country_code) >> 16) & 0xffff) );
 

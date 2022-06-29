@@ -113,7 +113,7 @@ wiced_result_t wiced_platform_init( void )
         sprintf ( chip_rev_buf, "Rev: 0x%02X", chip_rev );
     }
 
-    WPRINT_PLATFORM_INFO( ( "Platform " PLATFORM " initialised " "%s\n", chip_rev_buf ) );
+    // WPRINT_PLATFORM_INFO( ( "Platform " PLATFORM " initialised " "%s\n", chip_rev_buf ) );
 
     if ( WICED_TRUE == platform_watchdog_check_last_reset( ) )
     {
