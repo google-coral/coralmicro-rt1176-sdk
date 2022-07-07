@@ -20,10 +20,10 @@ err_t ethernetif_init(struct netif *netif, struct ethernetif *ethernetif,
                       void *enetBase,
                       const ethernetif_config_t *ethernetifConfig);
 
-void ethernetif_enet_init(struct netif *netif, struct ethernetif *ethernetif,
+err_t ethernetif_enet_init(struct netif *netif, struct ethernetif *ethernetif,
                           const ethernetif_config_t *ethernetifConfig);
 
-void ethernetif_phy_init(struct ethernetif *ethernetif,
+err_t ethernetif_phy_init(struct ethernetif *ethernetif,
                          const ethernetif_config_t *ethernetifConfig,
                          phy_speed_t *speed,
                          phy_duplex_t *duplex);

@@ -381,7 +381,7 @@ static void ethernetif_rx_free(ENET_Type *base, void *buffer, void *userData, ui
 /**
  * Initializes ENET driver.
  */
-void ethernetif_enet_init(struct netif *netif,
+err_t ethernetif_enet_init(struct netif *netif,
                           struct ethernetif *ethernetif,
                           const ethernetif_config_t *ethernetifConfig)
 {
@@ -420,7 +420,10 @@ void ethernetif_enet_init(struct netif *netif,
     BOARD_ENETFlexibleConfigure(&config);
 #endif
 
-    ethernetif_phy_init(ethernetif, ethernetifConfig, &speed, &duplex);
+    err_t err = ethernetif_phy_init(ethernetif, ethernetifConfig, &speed, &duplex);
+    if (err != ERR_OK) {
+        return err;
+    }
     config.miiSpeed  = (enet_mii_speed_t)speed;
     config.miiDuplex = (enet_mii_duplex_t)duplex;
 
@@ -483,6 +486,7 @@ void ethernetif_enet_init(struct netif *netif,
     ENET_Init(ethernetif->base, &ethernetif->handle, &config, &buffCfg[0], netif->hwaddr, sysClock);
 
     ENET_ActiveRead(ethernetif->base);
+    return ERR_OK;
 }
 
 void **ethernetif_enet_ptr(struct ethernetif *ethernetif)

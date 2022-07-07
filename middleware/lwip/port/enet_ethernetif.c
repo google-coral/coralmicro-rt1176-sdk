@@ -67,7 +67,7 @@
  * Code
  ******************************************************************************/
 
-void ethernetif_phy_init(struct ethernetif *ethernetif,
+err_t ethernetif_phy_init(struct ethernetif *ethernetif,
                          const ethernetif_config_t *ethernetifConfig,
                          phy_speed_t *speed,
                          phy_duplex_t *duplex)
@@ -96,7 +96,7 @@ void ethernetif_phy_init(struct ethernetif *ethernetif,
 
         if (kStatus_Success != status)
         {
-            LWIP_ASSERT("\r\nCannot initialize PHY.\r\n", 0);
+            return ERR_IF;
         }
 
         /* Wait for auto-negotiation success and link up */
@@ -132,6 +132,7 @@ void ethernetif_phy_init(struct ethernetif *ethernetif,
         LWIP_ASSERT("\r\nGiving up PHY initialization. Please check the ENET cable connection and link partner setting and reset the board.\r\n", 0);
     }
 #endif
+    return ERR_OK;
 }
 
 /**
@@ -274,7 +275,10 @@ err_t ethernetif_init(struct netif *netif,
     netif->flags |= NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
 
     /* ENET driver initialization.*/
-    ethernetif_enet_init(netif, ethernetif, ethernetifConfig);
+    err_t err = ethernetif_enet_init(netif, ethernetif, ethernetifConfig);
+    if (err != ERR_OK) {
+        return err;
+    }
 
 #if LWIP_IPV6 && LWIP_IPV6_MLD
     /*
