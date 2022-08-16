@@ -90,7 +90,7 @@ err_t ethernetif_phy_init(struct ethernetif *ethernetif,
 
     LWIP_PLATFORM_DIAG(("Initializing PHY..."));
 
-    while ((initWaitCount < ENET_ATONEGOTIATION_TIMEOUT) && (!(link && autonego)))
+    while ((initWaitCount < ENET_AUTONEGOTIATION_RETRIES) && (!(link && autonego)))
     {
         status = PHY_Init(ethernetifConfig->phyHandle, &phyConfig);
 
@@ -100,7 +100,7 @@ err_t ethernetif_phy_init(struct ethernetif *ethernetif,
         }
 
         /* Wait for auto-negotiation success and link up */
-        autoWaitCount = ENET_ATONEGOTIATION_TIMEOUT;
+        autoWaitCount = ENET_AUTONEGOTIATION_WAITS;
         do
         {
             if (phyConfig.autoNeg) {
@@ -111,6 +111,7 @@ err_t ethernetif_phy_init(struct ethernetif *ethernetif,
             {
                 break;
             }
+            vTaskDelay(pdMS_TO_TICKS(ENET_AUTONEGOTIATION_DELAY_MS));
         } while (--autoWaitCount);
         if (!autonego)
         {

@@ -71,8 +71,14 @@
 
 /*  Defines Ethernet Autonegotiation Timeout during initialization. 
  *  Set it to 0 to disable the waiting. */ 
-#ifndef ENET_ATONEGOTIATION_TIMEOUT
-    #define ENET_ATONEGOTIATION_TIMEOUT     (0x2FFFFU)
+#ifndef ENET_AUTONEGOTIATION_RETRIES
+    #define ENET_AUTONEGOTIATION_RETRIES 5
+#endif
+#ifndef ENET_AUTONEGOTIATION_WAITS
+    #define ENET_AUTONEGOTIATION_WAITS 600
+#endif
+#ifndef ENET_AUTONEGOTIATION_DELAY_MS
+    #define ENET_AUTONEGOTIATION_DELAY_MS 10
 #endif
 
 /* Define those to better describe your network interface. */
