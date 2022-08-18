@@ -93,6 +93,28 @@ status_t LPI2C_RTOS_Deinit(lpi2c_rtos_handle_t *handle);
 status_t LPI2C_RTOS_Transfer(lpi2c_rtos_handle_t *handle, lpi2c_master_transfer_t *transfer);
 
 /*!
+ * @brief Locks handle.
+ *
+ * This function locks handle->mutex, which must be locked before any RTOS code operates on
+ * handle->base. LPI2C_RTOS_Transfer is the only exception, it handles locking automatically.
+ *
+ * @param handle The RTOS LPI2C handle.
+ * @return status of the operation.
+ */
+status_t LPI2C_RTOS_Lock(lpi2c_rtos_handle_t *handle);
+
+/*!
+ * @brief Unlocks handle.
+ *
+ * This function unlocks handle->mutex. Calls to LPI2C_RTOS_Lock and LPI2C_RTOS_Unlock must
+ * be balanced.
+ *
+ * @param handle The RTOS LPI2C handle.
+ * @return status of the operation.
+ */
+status_t LPI2C_RTOS_Unlock(lpi2c_rtos_handle_t *handle);
+
+/*!
  * @}
  */
 

@@ -50,7 +50,7 @@ status_t LPI2C_RTOS_Init(lpi2c_rtos_handle_t *handle,
 
     (void)memset(handle, 0, sizeof(lpi2c_rtos_handle_t));
 
-    handle->mutex = xSemaphoreCreateMutex();
+    handle->mutex = xSemaphoreCreateRecursiveMutex();
     if (handle->mutex == NULL)
     {
         return kStatus_Fail;
@@ -102,7 +102,7 @@ status_t LPI2C_RTOS_Transfer(lpi2c_rtos_handle_t *handle, lpi2c_master_transfer_
     status_t status;
 
     /* Lock resource mutex */
-    if (xSemaphoreTake(handle->mutex, portMAX_DELAY) != pdTRUE)
+    if (LPI2C_RTOS_Lock(handle) != pdTRUE)
     {
         return kStatus_LPI2C_Busy;
     }
@@ -110,16 +110,46 @@ status_t LPI2C_RTOS_Transfer(lpi2c_rtos_handle_t *handle, lpi2c_master_transfer_
     status = LPI2C_MasterTransferNonBlocking(handle->base, &handle->drv_handle, transfer);
     if (status != kStatus_Success)
     {
-        (void)xSemaphoreGive(handle->mutex);
+        (void)LPI2C_RTOS_Unlock(handle);
         return status;
     }
 
     /* Wait for transfer to finish */
     (void)xSemaphoreTake(handle->semaphore, portMAX_DELAY);
 
-    /* Unlock resource mutex */
-    (void)xSemaphoreGive(handle->mutex);
-
     /* Return status captured by callback function */
-    return handle->async_status;
+    status = handle->async_status;
+
+    /* Unlock resource mutex */
+    (void)LPI2C_RTOS_Unlock(handle);
+
+    return status;
+}
+
+/*!
+ * @brief Locks handle.
+ *
+ * This function locks handle->mutex, which must be locked before any RTOS code operates on
+ * handle->base. LPI2C_RTOS_Transfer is the only exception, it handles locking automatically.
+ *
+ * @param handle The RTOS LPI2C handle.
+ * @return status of the operation.
+ */
+status_t LPI2C_RTOS_Lock(lpi2c_rtos_handle_t *handle)
+{
+    return xSemaphoreTakeRecursive(handle->mutex, portMAX_DELAY);
+}
+
+/*!
+ * @brief Unlocks handle.
+ *
+ * This function unlocks handle->mutex. Calls to LPI2C_RTOS_Lock and LPI2C_RTOS_Unlock must
+ * be balanced.
+ *
+ * @param handle The RTOS LPI2C handle.
+ * @return status of the operation.
+ */
+status_t LPI2C_RTOS_Unlock(lpi2c_rtos_handle_t *handle)
+{
+    return xSemaphoreGiveRecursive(handle->mutex);
 }
