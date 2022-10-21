@@ -60,10 +60,6 @@
 #include "lwip/init.h"
 #endif
 
-#ifndef errno
-int errno = 0;
-#endif
-
 /*
  * Prints an assertion messages and aborts execution.
  */
